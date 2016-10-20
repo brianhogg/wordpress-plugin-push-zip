@@ -1,0 +1,23 @@
+#!/usr/bin/php
+<?php
+/**
+ * Create folders deploy/<plugin name> and releases/ above this remote/ bare git repo
+ */
+
+list( $from, $to, $branch ) = explode( ' ', trim( stream_get_contents( STDIN ) ) );
+if ( false === strpos( $branch, '/master' ) ) {
+	echo "Received branch $branch, exiting";
+	exit;
+}
+
+$plugin_name = 'the-events-calendar-shortcode-pro';
+$deploy_folder = dirname( __FILE__ ) . '/../../deploy/' . $plugin_name . '/';
+$release_folder = dirname( __FILE__ ) . '/../../releases/';
+exec( 'GIT_WORK_TREE="' . $deploy_folder . '" git checkout -f master' );
+
+// fetch the version number from the plugin file
+preg_match( '~Version: ([0-9]|\.)*(?=\s|$)~', file_get_contents( $deploy_folder . $plugin_name . '.php' ), $matches );
+$version = trim( str_ireplace( 'Version:', '', $matches[0] ) );
+
+// create zip with version number in filename into releases
+exec( 'cd ' . $deploy_folder . '../ && zip -r ' . $release_folder . $plugin_name . '.' . $version . '.zip . -x *.git* --exclude=*.DS_Store*' );
